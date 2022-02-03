@@ -1,0 +1,20 @@
+version: '3' 
+
+services:
+  oracle:
+    image: truevoly/oracle-12c
+    # volumes:
+    #   - ./ora:/u01/app/oracle
+    #   - ./localtime:/etc/localtime:ro
+    ports:
+      - '1521:1521'
+      - '8080:8080'
+    #   - '5500:5500'
+    #   - '3000:3000'
+
+#     networks:
+#       - default
+# networks:
+#   default:
+#     external:
+#       name: ora_net
