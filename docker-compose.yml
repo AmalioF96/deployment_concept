@@ -6,7 +6,7 @@ services:
     restart: always
     ports:
       # HTTP
-      - 8080:8181
+      - 8000:8181
 
     environment:
 
