@@ -11,6 +11,8 @@ services:
     environment:
 
       NIFI_WEB_HTTP_PORT: 8181
+      SINGLE_USER_CREDENTIALS_USERNAME: admin
+      SINGLE_USER_CREDENTIALS_PASSWORD: admin
       
     volumes:
       - nifi_data:/home/nifi
