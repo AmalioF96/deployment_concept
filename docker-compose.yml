@@ -14,8 +14,8 @@ services:
       SINGLE_USER_CREDENTIALS_USERNAME: admin
       SINGLE_USER_CREDENTIALS_PASSWORD: admin
       
-    volumes:
-      - nifi_data:/opt/nifi
+    #volumes:
+      #- nifi_data:/opt/nifi
 
 volumes:
   nifi_data:
