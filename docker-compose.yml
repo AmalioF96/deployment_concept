@@ -6,16 +6,16 @@ services:
     restart: always
     ports:
       # HTTP
-      - 8000:8181
+      - 8000:8000
 
     environment:
-
-      NIFI_WEB_HTTP_PORT: 8181
+      NIFI_WEB_HTTP_HOST: 0.0.0.0
+      NIFI_WEB_HTTP_PORT: 8000
       SINGLE_USER_CREDENTIALS_USERNAME: admin
       SINGLE_USER_CREDENTIALS_PASSWORD: admin
       
     volumes:
-      - nifi_data:/home/nifi
+      - nifi_data:/opt/nifi
 
 volumes:
   nifi_data:
