@@ -17,6 +17,6 @@ services:
     #volumes:
       #- nifi_data:/opt/nifi
 
-volumes:
-  nifi_data:
-    external: true
+#volumes:
+ # nifi_data:
+  #  external: true
