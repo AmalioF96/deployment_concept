@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-config
+data:
+      
+      #Variables para ajustar la hora del contenedor
+      SET_CONTAINER_TIMEZONE: "true"
+      CONTAINER_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+      
+      #NiFi vars
+      NIFI_SENSITIVE_PROPS_KEY: myxuFINiTG+JFzQo6WPtpeNfyRcLHGvf
+      NIFI_SENSITIVE_PROPS_ALG: NIFI_PBKDF2_AES_GCM_256
+      
+

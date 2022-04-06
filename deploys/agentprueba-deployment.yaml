@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: agent
+  name: agentpruebas
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: agent
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        role: agent
+        service: agent
+    spec:
+      containers:
+        - name: c-nifikubev1
+          image: acabezap/apache-nifi:v1.0.5
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: pruebas-config
+            - configMapRef:
+                name: default-config
+            - secretRef:
+                name: secret-config-prueba
+          ports:
+            - containerPort: 28080
+            - containerPort: 9080
+          resources: {}
+      restartPolicy: Always
+status: {}

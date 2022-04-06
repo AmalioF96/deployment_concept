@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pruebas-config
+data:
+
+      #Validaciones
+      DEFAULT_SCHEMA: '{"type":"record", "name":"NiFi_ExecuteSQL_Record", "namespace":"any.data", "fields":[{"name":"DATA_BEFORE","type":["null",{ "type":"record", "name":"DATA_BEFORE", "fields":[{ "name":"id", "type":"long"}, {"name":"funcion","type":"string" }, {"name":"texto", "type":"string" }]}]}, { "name":"DATA_AFTER", "type":["null",{"type":"record", "name":"DATA_AFTER", "fields":[{ "name":"id", "type":"long" }, {"name":"funcion","type":"string" }, {"name":"texto", "type":"string" }]}]}]}'
+      
+      #Conexion la base de datos
+      DB_DRIVER_CLASS_NAME: oracle.jdbc.OracleDriver
+      
+      #Consultas a realizar sobre la base de datos
+      QUERY: SELECT data_before, data_after FROM items_pruebas_updates WHERE time_stamp <= CURRENT_TIMESTAMP and processed = 0
+      POST_QUERY: UPDATE items_pruebas_updates set processed = 1, processed_timestamp = CURRENT_TIMESTAMP WHERE time_stamp <= CURRENT_TIMESTAMP and processed = 0
+
+      #Direcciones de Minio
+      MINIO_BUCKET: atenea
+      MINIO_FOLDER: kubernetes_pruebas_dos_tablas
+      MINIO_BUCKET_INVALID: atenea
+      MINIO_FOLDER_INVALID: kubernetes_pruebas_elementos_invalidos
+
+   

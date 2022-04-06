@@ -1,0 +1,1366 @@
+MiNiFi Config Version: 3
+Flow Controller:
+  name: template_server_opendata_v_2_11
+  comment: ''
+Core Properties:
+  flow controller graceful shutdown period: 10 sec
+  flow service write delay interval: 500 ms
+  administrative yield duration: 30 sec
+  bored yield duration: 10 millis
+  max concurrent threads: 1
+  variable registry properties: ''
+FlowFile Repository:
+  implementation: org.apache.nifi.controller.repository.WriteAheadFlowFileRepository
+  partitions: 256
+  checkpoint interval: 2 mins
+  always sync: false
+  Swap:
+    threshold: 20000
+    in period: 5 sec
+    in threads: 1
+    out period: 5 sec
+    out threads: 4
+Content Repository:
+  implementation: org.apache.nifi.controller.repository.FileSystemRepository
+  content claim max appendable size: 10 MB
+  content claim max flow files: 100
+  content repository archive enabled: false
+  content repository archive max retention period: 12 hours
+  content repository archive max usage percentage: 50%
+  always sync: false
+Provenance Repository:
+  provenance rollover time: 1 min
+  implementation: org.apache.nifi.provenance.WriteAheadProvenanceRepository
+  provenance index shard size: 500 MB
+  provenance max storage size: 1 GB
+  provenance max storage time: 24 hours
+  provenance buffer size: 10000
+Component Status Repository:
+  buffer size: 1440
+  snapshot frequency: 1 min
+Security Properties:
+  keystore: ''
+  keystore type: ''
+  keystore password: ''
+  key password: ''
+  truststore: ''
+  truststore type: ''
+  truststore password: ''
+  ssl protocol: ''
+  Sensitive Props:
+    key: myxuFINiTG+JFzQo6WPtpeNfyRcLHGvf
+    algorithm: PBEWITHMD5AND256BITAES-CBC-OPENSSL
+Processors: []
+Controller Services:
+- id: 957e3414-0f50-35d4-0000-000000000000
+  name: DB_Connection
+  type: org.apache.nifi.dbcp.DBCPConnectionPool
+  Properties:
+    Database Connection URL: ${DB_CONNECTION_URL}
+    Database Driver Class Name: ${DB_DRIVER_CLASS_NAME}
+    Database User: ${DB_USER}
+    Max Total Connections: '8'
+    Max Wait Time: 500 millis
+    Password: ${DB_PASS}
+    Validation-query:
+    database-driver-locations:
+    dbcp-max-conn-lifetime: '-1'
+    dbcp-max-idle-conns: '8'
+    dbcp-min-evictable-idle-time: 30 mins
+    dbcp-min-idle-conns: '0'
+    dbcp-soft-min-evictable-idle-time: '-1'
+    dbcp-time-between-eviction-runs: '-1'
+    kerberos-credentials-service:
+    kerberos-password:
+    kerberos-principal:
+    kerberos-user-service:
+Process Groups:
+- id: 3c50d8cd-8069-3343-0000-000000000000
+  name: HttpServerAPI
+  Processors:
+  - id: c503ae47-21b9-3718-0000-000000000000
+    name: HandleHttpRequest
+    class: org.apache.nifi.processors.standard.HandleHttpRequest
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Additional HTTP Methods:
+      Allow DELETE: 'true'
+      Allow GET: 'true'
+      Allow HEAD: 'false'
+      Allow OPTIONS: 'false'
+      Allow POST: 'true'
+      Allow PUT: 'true'
+      Allowed Paths:
+      Client Authentication: No Authentication
+      Default URL Character Set: UTF-8
+      HTTP Context Map: 7e169fdd-cdd6-398b-0000-000000000000
+      Hostname:
+      Listening Port: '9080'
+      SSL Context Service:
+      container-queue-size: '50'
+      multipart-read-buffer-size: 512 KB
+      multipart-request-max-size: 1 MB
+      parameters-to-attributes:
+  - id: f2eb1624-f6b6-3216-0000-000000000000
+    name: HandleHttpResponse
+    class: org.apache.nifi.processors.standard.HandleHttpResponse
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - failure
+    - success
+    Properties:
+      Attributes to add to the HTTP Response (Regex):
+      HTTP Context Map: 7e169fdd-cdd6-398b-0000-000000000000
+      HTTP Status Code: '200'
+  - id: dd255e2f-df1b-3c14-0000-000000000000
+    name: HandleHttpResponse - 404
+    class: org.apache.nifi.processors.standard.HandleHttpResponse
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - failure
+    - success
+    Properties:
+      Attributes to add to the HTTP Response (Regex):
+      HTTP Context Map: 7e169fdd-cdd6-398b-0000-000000000000
+      HTTP Status Code: '404'
+  - id: 82dc4d54-4cce-302e-0000-000000000000
+    name: HandleHttpResponse - 500
+    class: org.apache.nifi.processors.standard.HandleHttpResponse
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - failure
+    - success
+    Properties:
+      Attributes to add to the HTTP Response (Regex):
+      HTTP Context Map: 7e169fdd-cdd6-398b-0000-000000000000
+      HTTP Status Code: '404'
+  - id: 3c5edb43-d22a-3440-0000-000000000000
+    name: RouteOnAttribute
+    class: org.apache.nifi.processors.standard.RouteOnAttribute
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Routing Strategy: Route to Property name
+      route_all: ${http.request.uri:equals("/all")}
+      route_bid: ${http.request.uri:find('^\/bid\/\d*$')}
+      route_count: ${http.request.uri:equals("/count")}
+      route_docs: ${http.request.uri:startsWith("/docs")}
+      route_file: ${http.request.uri:find('^\/file\/.*\.json')}
+      router_docs_swagger: ${http.request.uri:contains("swagger")}
+  Controller Services:
+  - id: 7e169fdd-cdd6-398b-0000-000000000000
+    name: StandardHttpContextMap
+    type: org.apache.nifi.http.StandardHttpContextMap
+    Properties:
+      Maximum Outstanding Requests: '5000'
+      Request Expiration: 1 min
+  Process Groups:
+  - id: 510b21de-319b-3f97-0000-000000000000
+    name: BID Process
+    Processors:
+    - id: df99a90b-e62b-3c9e-0000-000000000000
+      name: ConvertAvroToJSON
+      class: org.apache.nifi.processors.avro.ConvertAvroToJSON
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list:
+      - failure
+      Properties:
+        Avro schema:
+        JSON container options: array
+        Wrap Single Record: 'false'
+    - id: 769d40dd-3d0f-3812-0000-000000000000
+      name: ExecuteSQL - All
+      class: org.apache.nifi.processors.standard.ExecuteSQL
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Database Connection Pooling Service: 957e3414-0f50-35d4-0000-000000000000
+        Max Wait Time: 0 seconds
+        SQL select query: SELECT * FROM items
+        compression-format: NONE
+        dbf-default-precision: '10'
+        dbf-default-scale: '0'
+        dbf-normalize: 'false'
+        dbf-user-logical-types: 'false'
+        esql-auto-commit: 'true'
+        esql-fetch-size: '0'
+        esql-max-rows: '0'
+        esql-output-batch-size: '0'
+        sql-post-query:
+        sql-pre-query:
+    - id: c5fe2bc3-4158-3ba0-0000-000000000000
+      name: ExecuteSQL - Count
+      class: org.apache.nifi.processors.standard.ExecuteSQL
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Database Connection Pooling Service: 957e3414-0f50-35d4-0000-000000000000
+        Max Wait Time: 0 seconds
+        SQL select query: SELECT count(id) as num_elements FROM items
+        compression-format: NONE
+        dbf-default-precision: '10'
+        dbf-default-scale: '0'
+        dbf-normalize: 'false'
+        dbf-user-logical-types: 'false'
+        esql-auto-commit: 'true'
+        esql-fetch-size: '0'
+        esql-max-rows: '0'
+        esql-output-batch-size: '0'
+        sql-post-query:
+        sql-pre-query:
+    - id: c39020e4-de30-3db4-0000-000000000000
+      name: FetchS3Object
+      class: org.apache.nifi.processors.aws.s3.FetchS3Object
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        AWS Credentials Provider service:
+        Access Key: ${MINIO_USER}
+        Bucket: ${MINIO_BUCKET}
+        Communications Timeout: 30 secs
+        Credentials File:
+        Endpoint Override URL: ${MINIO_HOST}
+        Object Key: ${file}
+        Proxy Host:
+        Proxy Host Port:
+        Region: us-west-2
+        SSL Context Service:
+        Secret Key: ${MINIO_PASS}
+        Signer Override: Default Signature
+        Version:
+        encryption-service:
+        proxy-configuration-service:
+        proxy-user-name:
+        proxy-user-password:
+        range-length:
+        range-start:
+        requester-pays: 'false'
+    - id: 4c056a86-e420-375f-0000-000000000000
+      name: ModifyBytes
+      class: org.apache.nifi.processors.standard.ModifyBytes
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        End Offset: 0 B
+        Remove All Content: 'true'
+        Start Offset: 0 B
+    - id: 7f02bddc-1ad6-31f3-0000-000000000000
+      name: RouteOnAttribute
+      class: org.apache.nifi.processors.standard.RouteOnAttribute
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Routing Strategy: Route to Property name
+        rows_mt_0: ${executesql.row.count:gt(0)}
+    - id: bea99c1b-a268-3efa-0000-000000000000
+      name: RouteOnAttribute
+      class: org.apache.nifi.processors.standard.RouteOnAttribute
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Routing Strategy: Route to Property name
+        route_all: ${http.request.uri:equals("/all")}
+        route_count: ${http.request.uri:equals("/count")}
+        route_file: ${http.request.uri:find('^\/file\/.*\.json')}
+    - id: 2f09fc32-c04d-37bf-0000-000000000000
+      name: UpdateAttribute - Extract BID Parameter
+      class: org.apache.nifi.processors.attributes.UpdateAttribute
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Delete Attributes Expression:
+        Stateful Variables Initial Value:
+        Store State: Do not store state
+        canonical-value-lookup-cache-size: '100'
+        file: ${http.request.uri:substringAfterLast("/")}
+    Controller Services: []
+    Process Groups: []
+    Input Ports:
+    - id: b9476e5b-b59d-36a2-0000-000000000000
+      name: DB Response
+    Output Ports:
+    - id: b7525398-1e8a-3962-0000-000000000000
+      name: DBResponse ERROR 500
+    - id: 767abbbd-85d2-3c07-0000-000000000000
+      name: DBResponse Error 404
+    - id: 0505c611-1a01-34f3-0000-000000000000
+      name: DBResponse Ok 200
+    Funnels: []
+    Connections:
+    - id: 49bd6206-3edc-3a6e-0000-000000000000
+      name: ConvertAvroToJSON/success/DBResponse Ok 200
+      source id: df99a90b-e62b-3c9e-0000-000000000000
+      source relationship names:
+      - success
+      destination id: 0505c611-1a01-34f3-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 22c95d42-746b-3c70-0000-000000000000
+      name: DB Response//RouteOnAttribute
+      source id: b9476e5b-b59d-36a2-0000-000000000000
+      source relationship names: []
+      destination id: bea99c1b-a268-3efa-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 89c3193f-ee6c-37bf-0000-000000000000
+      name: ExecuteSQL - All/failure/DBResponse ERROR 500
+      source id: 769d40dd-3d0f-3812-0000-000000000000
+      source relationship names:
+      - failure
+      destination id: b7525398-1e8a-3962-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 4789ddad-e84f-3814-0000-000000000000
+      name: ExecuteSQL - All/success/RouteOnAttribute
+      source id: 769d40dd-3d0f-3812-0000-000000000000
+      source relationship names:
+      - success
+      destination id: 7f02bddc-1ad6-31f3-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 368003a1-9b0e-3e30-0000-000000000000
+      name: ExecuteSQL - Count/failure/DBResponse ERROR 500
+      source id: c5fe2bc3-4158-3ba0-0000-000000000000
+      source relationship names:
+      - failure
+      destination id: b7525398-1e8a-3962-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: bdb9cc32-cbe8-3953-0000-000000000000
+      name: ExecuteSQL - Count/success/RouteOnAttribute
+      source id: c5fe2bc3-4158-3ba0-0000-000000000000
+      source relationship names:
+      - success
+      destination id: 7f02bddc-1ad6-31f3-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 2fadaa85-1e22-3cc8-0000-000000000000
+      name: FetchS3Object/failure/DBResponse ERROR 500
+      source id: c39020e4-de30-3db4-0000-000000000000
+      source relationship names:
+      - failure
+      destination id: b7525398-1e8a-3962-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 50e5b2ea-64db-3d2d-0000-000000000000
+      name: FetchS3Object/success/DBResponse Ok 200
+      source id: c39020e4-de30-3db4-0000-000000000000
+      source relationship names:
+      - success
+      destination id: 0505c611-1a01-34f3-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 2557f745-a649-307a-0000-000000000000
+      name: ModifyBytes/success/DBResponse Error 404
+      source id: 4c056a86-e420-375f-0000-000000000000
+      source relationship names:
+      - success
+      destination id: 767abbbd-85d2-3c07-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 3ade2c10-2e0e-38bc-0000-000000000000
+      name: RouteOnAttribute/route_all/ExecuteSQL - All
+      source id: bea99c1b-a268-3efa-0000-000000000000
+      source relationship names:
+      - route_all
+      destination id: 769d40dd-3d0f-3812-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: d42a2950-e42c-39c2-0000-000000000000
+      name: RouteOnAttribute/route_count/ExecuteSQL - Count
+      source id: bea99c1b-a268-3efa-0000-000000000000
+      source relationship names:
+      - route_count
+      destination id: c5fe2bc3-4158-3ba0-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 873dca28-0f1d-3072-0000-000000000000
+      name: RouteOnAttribute/route_file/UpdateAttribute - Extract BID Parameter
+      source id: bea99c1b-a268-3efa-0000-000000000000
+      source relationship names:
+      - route_file
+      destination id: 2f09fc32-c04d-37bf-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 710d3bbb-f04c-3bc0-0000-000000000000
+      name: RouteOnAttribute/rows_mt_0/ConvertAvroToJSON
+      source id: 7f02bddc-1ad6-31f3-0000-000000000000
+      source relationship names:
+      - rows_mt_0
+      destination id: df99a90b-e62b-3c9e-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: dd204c4d-841a-3e95-0000-000000000000
+      name: RouteOnAttribute/unmatched/DBResponse ERROR 500
+      source id: bea99c1b-a268-3efa-0000-000000000000
+      source relationship names:
+      - unmatched
+      destination id: b7525398-1e8a-3962-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: c29de108-15ea-3e7a-0000-000000000000
+      name: RouteOnAttribute/unmatched/ModifyBytes
+      source id: 7f02bddc-1ad6-31f3-0000-000000000000
+      source relationship names:
+      - unmatched
+      destination id: 4c056a86-e420-375f-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 221ce596-d066-3dee-0000-000000000000
+      name: UpdateAttribute - Extract BID Parameter/success/FetchS3Object
+      source id: 2f09fc32-c04d-37bf-0000-000000000000
+      source relationship names:
+      - success
+      destination id: c39020e4-de30-3db4-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    Remote Process Groups: []
+  - id: f1082e96-cb2a-3f39-0000-000000000000
+    name: SwaggerDoc
+    Processors:
+    - id: b17a7a64-0a2a-3409-0000-000000000000
+      name: FetchFile
+      class: org.apache.nifi.processors.standard.FetchFile
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Completion Strategy: None
+        File to Fetch: /swagger/${bucket_object}
+        Log level when file not found: ERROR
+        Log level when permission denied: ERROR
+        Move Conflict Strategy: Rename
+        Move Destination Directory:
+    - id: a8ba1799-73f7-3ea4-0000-000000000000
+      name: RouteOnAttribute
+      class: org.apache.nifi.processors.standard.RouteOnAttribute
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list:
+      - unmatched
+      Properties:
+        Routing Strategy: Route to Property name
+        route_docs: ${http.request.uri:startsWith("/docs")}
+        router_docs_swagger: ${http.request.uri:contains("swagger")}
+    - id: e3f362d9-42cb-38dd-0000-000000000000
+      name: UpdateAttribute - Swagger Doc
+      class: org.apache.nifi.processors.attributes.UpdateAttribute
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Delete Attributes Expression:
+        Stateful Variables Initial Value:
+        Store State: Do not store state
+        bucket_object: index.html
+        canonical-value-lookup-cache-size: '100'
+    - id: 6fe4f70f-c11b-32ec-0000-000000000000
+      name: UpdateAttribute - Swagger Resources
+      class: org.apache.nifi.processors.attributes.UpdateAttribute
+      max concurrent tasks: 1
+      scheduling strategy: TIMER_DRIVEN
+      scheduling period: 0 sec
+      penalization period: 30 sec
+      yield period: 1 sec
+      run duration nanos: 0
+      auto-terminated relationships list: []
+      Properties:
+        Delete Attributes Expression:
+        Stateful Variables Initial Value:
+        Store State: Do not store state
+        bucket_object: ${http.request.uri:substringAfterLast("/")}
+        canonical-value-lookup-cache-size: '100'
+    Controller Services: []
+    Process Groups: []
+    Input Ports:
+    - id: 53ce4a12-76c8-3618-0000-000000000000
+      name: SwaggerHTTPRequest Doc
+    Output Ports:
+    - id: 28089f92-e359-3daf-0000-000000000000
+      name: SwaggerHTTPResponse
+    - id: aab0cfa0-c328-3d45-0000-000000000000
+      name: SwaggerHTTPResponse - 500
+    Funnels: []
+    Connections:
+    - id: 64c7ea89-e24c-3557-0000-000000000000
+      name: FetchFile/failure/SwaggerHTTPResponse - 500
+      source id: b17a7a64-0a2a-3409-0000-000000000000
+      source relationship names:
+      - failure
+      - not.found
+      - permission.denied
+      destination id: aab0cfa0-c328-3d45-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 1a0e8fcd-d95f-3160-0000-000000000000
+      name: FetchFile/success/SwaggerHTTPResponse
+      source id: b17a7a64-0a2a-3409-0000-000000000000
+      source relationship names:
+      - success
+      destination id: 28089f92-e359-3daf-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 42cf1d6a-f6fe-33a1-0000-000000000000
+      name: RouteOnAttribute/route_docs/UpdateAttribute - Swagger Doc
+      source id: a8ba1799-73f7-3ea4-0000-000000000000
+      source relationship names:
+      - route_docs
+      destination id: e3f362d9-42cb-38dd-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: efa3243e-ecba-3c62-0000-000000000000
+      name: RouteOnAttribute/router_docs_swagger/UpdateAttribute - Swagger Resources
+      source id: a8ba1799-73f7-3ea4-0000-000000000000
+      source relationship names:
+      - router_docs_swagger
+      destination id: 6fe4f70f-c11b-32ec-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 8d2346b8-e5b5-35bd-0000-000000000000
+      name: SwaggerHTTPRequest Doc//RouteOnAttribute
+      source id: 53ce4a12-76c8-3618-0000-000000000000
+      source relationship names: []
+      destination id: a8ba1799-73f7-3ea4-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: 9254bba4-2ccd-3292-0000-000000000000
+      name: UpdateAttribute - Swagger Doc/success/FetchFile
+      source id: e3f362d9-42cb-38dd-0000-000000000000
+      source relationship names:
+      - success
+      destination id: b17a7a64-0a2a-3409-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    - id: a4f5808c-78f9-32c4-0000-000000000000
+      name: UpdateAttribute - Swagger Resources/success/FetchFile
+      source id: 6fe4f70f-c11b-32ec-0000-000000000000
+      source relationship names:
+      - success
+      destination id: b17a7a64-0a2a-3409-0000-000000000000
+      max work queue size: 10000
+      max work queue data size: 1 GB
+      flowfile expiration: 0 sec
+      queue prioritizer class: ''
+    Remote Process Groups: []
+  Input Ports: []
+  Output Ports: []
+  Funnels: []
+  Connections:
+  - id: d4bc54ca-94aa-3d09-0000-000000000000
+    name: DBResponse ERROR 500//HandleHttpResponse - 500
+    source id: b7525398-1e8a-3962-0000-000000000000
+    source relationship names: []
+    destination id: 82dc4d54-4cce-302e-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 1df33ffc-2d15-382f-0000-000000000000
+    name: DBResponse Error 404//HandleHttpResponse - 404
+    source id: 767abbbd-85d2-3c07-0000-000000000000
+    source relationship names: []
+    destination id: dd255e2f-df1b-3c14-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 6160e849-13b8-3501-0000-000000000000
+    name: DBResponse Ok 200//HandleHttpResponse
+    source id: 0505c611-1a01-34f3-0000-000000000000
+    source relationship names: []
+    destination id: f2eb1624-f6b6-3216-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 81362c72-cdd0-3f1d-0000-000000000000
+    name: HandleHttpRequest/success/RouteOnAttribute
+    source id: c503ae47-21b9-3718-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 3c5edb43-d22a-3440-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: f8dd4947-094c-3e9e-0000-000000000000
+    name: RouteOnAttribute/route_docs/SwaggerHTTPRequest Doc
+    source id: 3c5edb43-d22a-3440-0000-000000000000
+    source relationship names:
+    - route_docs
+    - router_docs_swagger
+    destination id: 53ce4a12-76c8-3618-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: a3d1539c-055e-3126-0000-000000000000
+    name: RouteOnAttribute/route_file/DB Response
+    source id: 3c5edb43-d22a-3440-0000-000000000000
+    source relationship names:
+    - route_all
+    - route_bid
+    - route_count
+    - route_file
+    destination id: b9476e5b-b59d-36a2-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 5ffeffd5-b095-328e-0000-000000000000
+    name: RouteOnAttribute/unmatched/HandleHttpResponse - 404
+    source id: 3c5edb43-d22a-3440-0000-000000000000
+    source relationship names:
+    - unmatched
+    destination id: dd255e2f-df1b-3c14-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 74474f8d-659c-3dd8-0000-000000000000
+    name: SwaggerHTTPResponse - 500//HandleHttpResponse - 500
+    source id: aab0cfa0-c328-3d45-0000-000000000000
+    source relationship names: []
+    destination id: 82dc4d54-4cce-302e-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: da382b68-bb45-3731-0000-000000000000
+    name: SwaggerHTTPResponse//HandleHttpResponse
+    source id: 28089f92-e359-3daf-0000-000000000000
+    source relationship names: []
+    destination id: f2eb1624-f6b6-3216-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  Remote Process Groups: []
+- id: 9d9bc68c-8cad-32bc-0000-000000000000
+  name: DBFlow
+  Processors:
+  - id: 2ed5e31f-11af-3658-0000-000000000000
+    name: ConvertAvroToJSON
+    class: org.apache.nifi.processors.avro.ConvertAvroToJSON
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Avro schema:
+      JSON container options: array
+      Wrap Single Record: 'false'
+  - id: 579ea036-915c-3f23-0000-000000000000
+    name: ExecuteSQL
+    class: org.apache.nifi.processors.standard.ExecuteSQL
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 60 sec
+    penalization period: 60 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Database Connection Pooling Service: 957e3414-0f50-35d4-0000-000000000000
+      Max Wait Time: 0 seconds
+      SQL select query: ${QUERY}
+      compression-format: NONE
+      dbf-default-precision: '10'
+      dbf-default-scale: '0'
+      dbf-normalize: 'false'
+      dbf-user-logical-types: 'false'
+      esql-auto-commit: 'true'
+      esql-fetch-size: '0'
+      esql-max-rows: '0'
+      esql-output-batch-size: '0'
+      sql-post-query: ${POST_QUERY}
+      sql-pre-query:
+  - id: 632bbf44-1149-35d9-0000-000000000000
+    name: GenerateFlowFile
+    class: org.apache.nifi.processors.standard.GenerateFlowFile
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 60 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Batch Size: '1'
+      Data Format: Text
+      File Size: 0B
+      Unique FlowFiles: 'false'
+      character-set: UTF-8
+      generate-ff-custom-text:
+      mime-type:
+      timestamp: ${now():format('yyyy-MM-dd HH:mm:ss.SSS')}
+  - id: 1043ea3b-94e8-398e-0000-000000000000
+    name: Log Parseo incorrecto
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: info
+      log-message: SQL Action Failed
+      log-prefix: SQL
+  - id: 180d6ddd-f6bd-328b-0000-000000000000
+    name: LogMessage
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: error
+      log-message: '[No se pudo guardar]'
+      log-prefix: '[Debug S3]'
+  - id: cb4274fa-d606-3b1d-0000-000000000000
+    name: LogMessage
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: warn
+      log-message: '[SI se pudo guardar]'
+      log-prefix: '[Debug S3]'
+  - id: d43cb4fe-f8dd-37d5-0000-000000000000
+    name: LogMessage
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: error
+      log-message: No se han podido eliminar los caracteres especiales del JSON.
+      log-prefix: '[Error al formatear Json]'
+  - id: e5c7ee12-d693-3bc4-0000-000000000000
+    name: LogMessage
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: warn
+      log-message: SQL Action Failed
+      log-prefix: SQL
+  - id: ec5ed7dc-4651-361b-0000-000000000000
+    name: LogMessage
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: warn
+      log-message: '[Se realiza la consulta]'
+      log-prefix: '[Debug SQL]'
+  - id: be6bb891-3ca4-394c-0000-000000000000
+    name: LogValidacionCorrecta
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: warn
+      log-message: Se ha validado correctamente la informacion obtenida de la base
+        de datos
+      log-prefix: '[Validar record]'
+  - id: 9ca58b23-ba8b-3e36-0000-000000000000
+    name: LogValidacionErronea
+    class: org.apache.nifi.processors.standard.LogMessage
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - success
+    Properties:
+      log-level: error
+      log-message: Error al validar la informacion obtenida de la base de datos
+      log-prefix: '[Validar record]'
+  - id: 705d6f93-b40d-37c2-0000-000000000000
+    name: PutS3Object
+    class: org.apache.nifi.processors.aws.s3.PutS3Object
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 30 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      AWS Credentials Provider service:
+      Access Key: ${MINIO_USER}
+      Bucket: ${MINIO_BUCKET}
+      Cache Control:
+      Communications Timeout: 30 secs
+      Content Disposition:
+      Content Type:
+      Credentials File:
+      Endpoint Override URL: ${MINIO_HOST}
+      Expiration Time Rule:
+      FullControl User List: ${s3.permissions.full.users}
+      Multipart Part Size: 5 GB
+      Multipart Threshold: 5 GB
+      Multipart Upload AgeOff Interval: 60 min
+      Multipart Upload Max Age Threshold: 7 days
+      Object Key: ${filename}
+      Owner: ${s3.owner}
+      Proxy Host:
+      Proxy Host Port:
+      Read ACL User List: ${s3.permissions.readacl.users}
+      Read Permission User List: ${s3.permissions.read.users}
+      Region: eu-west-3
+      SSL Context Service:
+      Secret Key: ${MINIO_PASS}
+      Signer Override: Default Signature
+      Storage Class: Standard
+      Write ACL User List: ${s3.permissions.writeacl.users}
+      Write Permission User List: ${s3.permissions.write.users}
+      canned-acl: ${s3.permissions.cannedacl}
+      encryption-service:
+      proxy-configuration-service:
+      proxy-user-name:
+      proxy-user-password:
+      s3-object-remove-tags-prefix: 'false'
+      s3-object-tags-prefix:
+      s3-temporary-directory-multipart: ${java.io.tmpdir}
+      server-side-encryption: None
+      use-chunked-encoding: 'true'
+      use-path-style-access: 'false'
+  - id: 42386df7-f67d-3089-0000-000000000000
+    name: ReplaceText
+    class: org.apache.nifi.processors.standard.ReplaceText
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Character Set: UTF-8
+      Evaluation Mode: Line-by-Line
+      Line-by-Line Evaluation Mode: All
+      Maximum Buffer Size: 100 MB
+      Regular Expression: (?s)((\\"))
+      Replacement Strategy: Regex Replace
+      Replacement Value: '"'
+  - id: 4409d776-504b-3f9c-0000-000000000000
+    name: ReplaceText
+    class: org.apache.nifi.processors.standard.ReplaceText
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 10 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Character Set: UTF-8
+      Evaluation Mode: Line-by-Line
+      Line-by-Line Evaluation Mode: All
+      Maximum Buffer Size: 100 MB
+      Regular Expression: (?s)("\{\\")
+      Replacement Strategy: Regex Replace
+      Replacement Value: \{"
+  - id: c08d4d43-fb37-3526-0000-000000000000
+    name: ReplaceText
+    class: org.apache.nifi.processors.standard.ReplaceText
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Character Set: UTF-8
+      Evaluation Mode: Line-by-Line
+      Line-by-Line Evaluation Mode: All
+      Maximum Buffer Size: 100 MB
+      Regular Expression: (?s)(}")
+      Replacement Strategy: Regex Replace
+      Replacement Value: '}'
+  - id: 8da23527-70a1-36b6-0000-000000000000
+    name: RouteOnAttribute
+    class: org.apache.nifi.processors.standard.RouteOnAttribute
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list:
+    - unmatched
+    Properties:
+      Routing Strategy: Route to Property name
+      rows_mt_0: ${executesql.row.count:gt(0)}
+  - id: 50ad29d0-0570-3d31-0000-000000000000
+    name: UpdateAttribute
+    class: org.apache.nifi.processors.attributes.UpdateAttribute
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Delete Attributes Expression:
+      Stateful Variables Initial Value:
+      Store State: Do not store state
+      canonical-value-lookup-cache-size: '100'
+      filename: ${MINIO_FOLDER}/${filename:substringBeforeLast('.'):append('.json')}
+  - id: d75f22e8-a395-367f-0000-000000000000
+    name: UpdateAttribute
+    class: org.apache.nifi.processors.attributes.UpdateAttribute
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 0 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      Delete Attributes Expression:
+      Stateful Variables Initial Value:
+      Store State: Do not store state
+      canonical-value-lookup-cache-size: '100'
+      filename: ${MINIO_FOLDER}/${filename:substringBeforeLast('.'):append('.avro')}
+  - id: aae74871-b858-3687-0000-000000000000
+    name: ValidateRecord
+    class: org.apache.nifi.processors.standard.ValidateRecord
+    max concurrent tasks: 1
+    scheduling strategy: TIMER_DRIVEN
+    scheduling period: 30 sec
+    penalization period: 30 sec
+    yield period: 1 sec
+    run duration nanos: 0
+    auto-terminated relationships list: []
+    Properties:
+      allow-extra-fields: 'false'
+      coerce-types: 'false'
+      invalid-record-writer:
+      maximum-validation-details-length: '1024'
+      record-reader: 0fff4585-a690-3d09-0000-000000000000
+      record-writer: 0c2c13d5-acd9-3566-0000-000000000000
+      schema-access-strategy: schema-text-property
+      schema-name: ${schema.name}
+      schema-registry:
+      schema-text: ${DEFAULT_SCHEMA}
+      strict-type-checking: 'true'
+      validation-details-attribute-name:
+  Controller Services:
+  - id: 0fff4585-a690-3d09-0000-000000000000
+    name: AvroReader
+    type: org.apache.nifi.avro.AvroReader
+    Properties:
+      cache-size: '1000'
+      schema-access-strategy: embedded-avro-schema
+      schema-branch:
+      schema-name: ${schema.name}
+      schema-registry:
+      schema-text: ${avro.schema}
+      schema-version:
+  - id: 0c2c13d5-acd9-3566-0000-000000000000
+    name: AvroRecordSetWriter
+    type: org.apache.nifi.avro.AvroRecordSetWriter
+    Properties:
+      Schema Write Strategy: avro-embedded
+      cache-size: '1000'
+      compression-format: NONE
+      encoder-pool-size: '32'
+      schema-access-strategy: inherit-record-schema
+      schema-branch:
+      schema-cache:
+      schema-name: ${schema.name}
+      schema-protocol-version: '1'
+      schema-registry:
+      schema-text: ${avro.schema}
+      schema-version:
+  Process Groups: []
+  Input Ports: []
+  Output Ports: []
+  Funnels: []
+  Connections:
+  - id: 4c753aba-fbc3-3973-0000-000000000000
+    name: ConvertAvroToJSON/failure/Log Parseo incorrecto
+    source id: 2ed5e31f-11af-3658-0000-000000000000
+    source relationship names:
+    - failure
+    destination id: 1043ea3b-94e8-398e-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 9a6eced2-ada6-3084-0000-000000000000
+    name: ConvertAvroToJSON/success/ReplaceText
+    source id: 2ed5e31f-11af-3658-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 4409d776-504b-3f9c-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 999dc9b9-50ab-38f5-0000-000000000000
+    name: ExecuteSQL/failure/LogMessage
+    source id: 579ea036-915c-3f23-0000-000000000000
+    source relationship names:
+    - failure
+    destination id: e5c7ee12-d693-3bc4-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 92dbbdb5-2869-32ea-0000-000000000000
+    name: ExecuteSQL/success/LogMessage
+    source id: 579ea036-915c-3f23-0000-000000000000
+    source relationship names:
+    - success
+    destination id: ec5ed7dc-4651-361b-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: f68749db-944e-3fb1-0000-000000000000
+    name: ExecuteSQL/success/ValidateRecord
+    source id: 579ea036-915c-3f23-0000-000000000000
+    source relationship names:
+    - success
+    destination id: aae74871-b858-3687-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: a322fa62-effb-390d-0000-000000000000
+    name: GenerateFlowFile/success/ExecuteSQL
+    source id: 632bbf44-1149-35d9-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 579ea036-915c-3f23-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 1a245e8d-9de4-3841-0000-000000000000
+    name: PutS3Object/failure/LogMessage
+    source id: 705d6f93-b40d-37c2-0000-000000000000
+    source relationship names:
+    - failure
+    destination id: 180d6ddd-f6bd-328b-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 8d3b1930-85bd-369a-0000-000000000000
+    name: PutS3Object/success/LogMessage
+    source id: 705d6f93-b40d-37c2-0000-000000000000
+    source relationship names:
+    - success
+    destination id: cb4274fa-d606-3b1d-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: cdae20f3-dd30-3bdb-0000-000000000000
+    name: ReplaceText/failure/LogMessage
+    source id: 4409d776-504b-3f9c-0000-000000000000
+    source relationship names:
+    - failure
+    destination id: d43cb4fe-f8dd-37d5-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: db9050be-b64d-3c92-0000-000000000000
+    name: ReplaceText/failure/LogMessage
+    source id: 42386df7-f67d-3089-0000-000000000000
+    source relationship names:
+    - failure
+    destination id: d43cb4fe-f8dd-37d5-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: f7a6fdb5-faac-3762-0000-000000000000
+    name: ReplaceText/failure/LogMessage
+    source id: c08d4d43-fb37-3526-0000-000000000000
+    source relationship names:
+    - failure
+    destination id: d43cb4fe-f8dd-37d5-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: a197bf37-a981-3361-0000-000000000000
+    name: ReplaceText/success/ReplaceText
+    source id: 4409d776-504b-3f9c-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 42386df7-f67d-3089-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: f62acf85-65da-369b-0000-000000000000
+    name: ReplaceText/success/ReplaceText
+    source id: 42386df7-f67d-3089-0000-000000000000
+    source relationship names:
+    - success
+    destination id: c08d4d43-fb37-3526-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: f7704172-d81d-3043-0000-000000000000
+    name: ReplaceText/success/UpdateAttribute
+    source id: c08d4d43-fb37-3526-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 50ad29d0-0570-3d31-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 61f4a1c6-fd73-372c-0000-000000000000
+    name: RouteOnAttribute/rows_mt_0/ConvertAvroToJSON
+    source id: 8da23527-70a1-36b6-0000-000000000000
+    source relationship names:
+    - rows_mt_0
+    destination id: 2ed5e31f-11af-3658-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 720b2c41-f857-3112-0000-000000000000
+    name: RouteOnAttribute/rows_mt_0/UpdateAttribute
+    source id: 8da23527-70a1-36b6-0000-000000000000
+    source relationship names:
+    - rows_mt_0
+    destination id: d75f22e8-a395-367f-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 15ac2c93-fbc0-3ae5-0000-000000000000
+    name: UpdateAttribute/success/PutS3Object
+    source id: 50ad29d0-0570-3d31-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 705d6f93-b40d-37c2-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 44539428-3e0c-3617-0000-000000000000
+    name: UpdateAttribute/success/PutS3Object
+    source id: d75f22e8-a395-367f-0000-000000000000
+    source relationship names:
+    - success
+    destination id: 705d6f93-b40d-37c2-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 4959dfc3-5f08-39be-0000-000000000000
+    name: ValidateRecord/failure/LogValidacionErronea
+    source id: aae74871-b858-3687-0000-000000000000
+    source relationship names:
+    - failure
+    - invalid
+    destination id: 9ca58b23-ba8b-3e36-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: 59a5c965-04ec-3e0b-0000-000000000000
+    name: ValidateRecord/valid/LogValidacionCorrecta
+    source id: aae74871-b858-3687-0000-000000000000
+    source relationship names:
+    - valid
+    destination id: be6bb891-3ca4-394c-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  - id: cb2c80bf-2000-35ac-0000-000000000000
+    name: ValidateRecord/valid/RouteOnAttribute
+    source id: aae74871-b858-3687-0000-000000000000
+    source relationship names:
+    - valid
+    destination id: 8da23527-70a1-36b6-0000-000000000000
+    max work queue size: 10000
+    max work queue data size: 1 GB
+    flowfile expiration: 0 sec
+    queue prioritizer class: ''
+  Remote Process Groups: []
+Input Ports: []
+Output Ports: []
+Funnels: []
+Connections: []
+Remote Process Groups: []
+NiFi Properties Overrides: {}

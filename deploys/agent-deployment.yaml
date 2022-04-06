@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: agent
+  name: agent1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: agent
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        role: agent
+        service: agent
+    spec:
+      containers:
+        - name: c-nifikubev1
+          image: acabezap/apache-nifi:v1.0.9
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: special-config
+            - configMapRef:
+                name: default-config
+            - secretRef:
+                name: secret-config
+          ports:
+            - containerPort: 28080
+            - containerPort: 9080
+          resources: {}
+          volumeMounts:
+            - name: swagger-volume
+              mountPath: /tmp
+            - name: config-volume
+              mountPath: /opt/minifi/minifi-current/conf/config.yml
+            - name: bootstrap-volume
+              mountPath: /opt/minifi/minifi-current/conf/bootstrap.conf
+      volumes:
+        - name: swagger-volume
+          hostPath:
+            path: /root/kubernetes/swagger
+        - name: config-volume
+          hostPath:
+            path: /root/kubernetes/template.yml
+            type: File
+        - name: bootstrap-volume
+          hostPath:
+            path: /root/kubernetes/bootstrap.conf
+            type: File
+      restartPolicy: Always
+
+status: {}
