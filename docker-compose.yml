@@ -1,6 +1,18 @@
 version: '3.7'
 
 services:
+  db:
+    image: mongo
+    restart: always
+    expose: 
+      - '27017'
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: up0
+      MONGO_INITDB_ROOT_PASSWORD: up0
+      MONGO_INITDB_DATABASE: suscripciones
+      
   minio:
     image: minio/minio:RELEASE.2022-02-24T22-12-01Z.fips
     command: server --console-address :9001 /data
