@@ -43,6 +43,10 @@ services:
       timeout: 20s
       retries: 3
 
+endpoints:
+  - path: /
+    service: mariadb
+    port: 3306
 volumes:
   minio-data:
   mysql-data:
