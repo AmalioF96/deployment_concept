@@ -18,7 +18,7 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ~/apps/mariadb:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=S3cret
       - MYSQL_PASSWORD=An0thrS3crt
@@ -45,3 +45,4 @@ services:
 
 volumes:
   minio-data:
+  mysql-data:
