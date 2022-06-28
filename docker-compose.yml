@@ -2,17 +2,16 @@ version: '3.7'
 
 services:
   db:
-    image: mysql:5.7
+    image: mongo
     restart: always
-    environment:
-      MYSQL_DATABASE: 'db'
-      MYSQL_USER: 'user'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'password'
+    expose: 
+      - '27017'
     ports:
-      - '3306:3306'
-    volumes:
-      - my-db:/var/lib/mysql
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: up0
+      MONGO_INITDB_ROOT_PASSWORD: up0
+      MONGO_INITDB_DATABASE: suscripciones
       
   minio:
     image: minio/minio:RELEASE.2022-02-24T22-12-01Z.fips
@@ -32,11 +31,5 @@ services:
       timeout: 20s
       retries: 3
 
-endpoints:
-  - path: /
-    service: db
-    port: 3306
-
 volumes:
   minio-data:
-  my-db:
